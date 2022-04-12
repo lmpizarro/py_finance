@@ -23,10 +23,11 @@ https://pypi.org/project/pyportfolioopt/
 """
 
 #Fetch data from yahoo and save under DataFrame named 'data'
-assets = ['AAPL', 'AMZN', 'MSFT', 'TSLA']
 
-assets = ['AAPL', 'MSFT', 'GOOGL', 'TSLA', 'WMT', 'ABBV', 'IBM', 'INTC', 'AMD', 'WBA',
-          'FB', 'TXN', 'JPM', 'DE', 'CAT']
+assets = ['AAPL', 'AMZN', 'FB', 'WMT', 'KO', 'GOOGL', 'MSFT', 'COST', 'TGT', 'JNJ',
+          'AMAT', 'ADBE', 'TM', 'TSM', 'ADI', 'TXN', 'AMD', 'INTC', 'IBM', 'NVDA',
+          'WBA', 'ABBV', 'JPM', 'CAT', 'DE', 'NVS', 'AMGN', 'AVGO', 'MELI', 'MMM',
+          'NKE', 'PG', 'QCOM', 'VZ', 'PEP']
 portfolio = yf.download(assets, '2021-4-10')['Adj Close']
 
 mu = mean_historical_return(portfolio)
@@ -37,7 +38,7 @@ input('get covariance')
 print(S)
 input('--------------- get efficient frontier --------------')
 
-ef = EfficientFrontier(mu, S, weight_bounds=(0.005,.1))
+ef = EfficientFrontier(mu, S, weight_bounds=(0.0,1.0))
 weights = ef.max_sharpe()
 
 cleaned_weights = ef.clean_weights()

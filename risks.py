@@ -183,6 +183,8 @@ def example_portfolio():
     print(po.benchmark.adj_close)
     print(po.beta())
     pp.pprint(po.ticker.get_props())
+
+
 if __name__ == "__main__":
     benchmark = ['SPY']
     portfolio = ['AMZN', 'AAPL', 'WMT', 'KO']
