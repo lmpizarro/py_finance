@@ -28,6 +28,7 @@ assets = ['AAPL', 'AMZN', 'FB', 'WMT', 'KO', 'GOOGL', 'MSFT', 'COST', 'TGT', 'JN
           'AMAT', 'ADBE', 'TM', 'TSM', 'ADI', 'TXN', 'AMD', 'INTC', 'IBM', 'NVDA',
           'WBA', 'ABBV', 'JPM', 'CAT', 'DE', 'NVS', 'AMGN', 'AVGO', 'MELI', 'MMM',
           'NKE', 'PG', 'QCOM', 'VZ', 'PEP']
+
 portfolio = yf.download(assets, '2021-4-10')['Adj Close']
 
 mu = mean_historical_return(portfolio)
@@ -36,6 +37,7 @@ print('mean return')
 print(mu)
 input('get covariance')
 print(S)
+
 input('--------------- get efficient frontier --------------')
 
 ef = EfficientFrontier(mu, S, weight_bounds=(0.0,1.0))
