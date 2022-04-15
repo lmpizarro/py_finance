@@ -5,6 +5,12 @@ from typing import List, Dict, Any
 import pandas as pd
 import yfinance as yf
 import pprint
+from pydantic import BaseModel, Field
+
+
+class PortfolioComponent(BaseModel):
+    shares : int = Field(..., ge=1, default=1)
+    symbol : str = Field(..., default='AAPL')
 
 pp = pprint.PrettyPrinter(indent=4)
 
@@ -29,10 +35,12 @@ class Portofolio:
         list_close = []
         names = []
         for e in self.components:
-            if self.benchmark != None and e != self.benchmark.ticker or self.benchmark == None:
+            if self.benchmark != None and e != self.benchmark.ticker or \
+                                               self.benchmark == None:
                 names.append(e)
 
-                list_close.append(self.components[e]['ticker'].adj_close * self.components[e]['shares'])
+                list_close.append(self.components[e]['ticker'].adj_close * \
+                                  self.components[e]['shares'])
             elif e == self.benchmark.ticker:
                 self.benchmark.set_adj_close(self.components[e]['ticker'].adj_close)
             
