@@ -9,13 +9,13 @@ pp = pprint.PrettyPrinter(indent=4)
 
 class Ticker:
 
-    def __init__(self, ticker, start, download=True) -> None:
+    def __init__(self, symbol, start, download=True) -> None:
         self.start = start
-        self.ticker = ticker.upper()
+        self.ticker = symbol.upper()
         self.pct_change = None
 
         if download:
-            self.adj_close = yf.download(ticker, start)['Adj Close']
+            self.adj_close = yf.download(symbol, start)['Adj Close']
             self.adj_close = self.adj_close.fillna(0)
             self.close_props()
             self.returns_props()
@@ -54,7 +54,9 @@ class Ticker:
                     'return': self.final_return(),
                     'first': self.first_close(),
                     'last': self.last_close(),
-                    'max_draw_pct': np.abs(self.drawdown.min()) / self.adj_close.max(), 
+                    'max_draw_pct': np.abs(self.drawdown.min()) / self.adj_close.max(),
+                    'avg_draw_down': np.abs(self.drawdown.mean()),
+                    'std_draw_down': np.abs(self.drawdown.std())
                 },
                 'returns': {
                     'std': self.returns_std,
