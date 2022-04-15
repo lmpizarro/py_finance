@@ -2,4 +2,6 @@ version: "3"
 services:
   ticker:
     build: .
+    volumes:
+      - ./data:/data
 

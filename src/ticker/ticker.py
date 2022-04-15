@@ -4,12 +4,15 @@ from sklearn.linear_model import LinearRegression
 import pandas as pd
 import matplotlib.pyplot as plt
 import pprint
+from typing import Dict, Any
 
 pp = pprint.PrettyPrinter(indent=4)
 
 class Ticker:
 
-    def __init__(self, symbol, start, download=True) -> None:
+    def __init__(self, symbol: str, 
+                 start: str, download: bool=True) -> None:
+
         self.start = start
         self.ticker = symbol.upper()
         self.pct_change = None
@@ -28,7 +31,7 @@ class Ticker:
         self.returns_props()
 
 
-    def close_props(self):
+    def close_props(self) -> None:
         try:
             self.drawdown = self.adj_close - self.adj_close.cummax()
             self.pct_change = self.adj_close.pct_change()
@@ -36,14 +39,12 @@ class Ticker:
         except Exception:
             raise Exception
 
-    def returns_props(self):
+    def returns_props(self) -> None:
         self.returns_std_neg = self.pct_change[self.pct_change<0].std()
         self.returns_std_pos = self.pct_change[self.pct_change>0].std()
         self.returns_std = np.array(self.pct_change).std()
-    
-        return 
 
-    def get_props(self):
+    def get_props(self) -> Dict[str: Any]:
         return {
                 'ticker' : self.ticker,
                 'prices': {
@@ -86,24 +87,25 @@ class Ticker:
     def first_close(self):
         return self.adj_close.iloc[0]
 
-    def final_return(self):
+    def final_return(self) -> float:
         r = (self.last_close() - self.first_close()) / self.first_close()
         return r
 
-    def sharpe(self):
+    def sharpe(self) -> float:
         return self.final_return() / self.returns_std
 
-    def sortino(self):
+    def sortino(self) -> float:
         return self.final_return() / self.returns_std_neg
 
 class Portofolio:
-    def __init__(self, name='po', start='2021-04-11') -> None:
+    def __init__(self, name:str='po', 
+                 start:str ='2021-04-11') -> None:
         self.start = start
         self.ticker: Ticker = Ticker(name, start=start, download=False)
         self.benchmark: Ticker = None
         self.components = {}
 
-    def add(self,ticker:Ticker, shares):
+    def add(self,ticker:Ticker, shares: int):
         if ticker.start != self.start:
             raise Exception
         
@@ -148,7 +150,7 @@ class Portofolio:
         if self.benchmark != None:
             return self.ticker.beta(self.benchmark)
 
-def example_beta():
+def example_beta() -> None:
     start_period = '2021-04-06'
     spy = Ticker('SPY', start_period)
     aapl = Ticker('AAPL', start_period)
@@ -156,7 +158,7 @@ def example_beta():
 
     pp.pprint(spy.get_props())
 
-def example_portfolio():
+def example_portfolio() -> None:
     start_period = '2021-04-06'
     spy = Ticker('SPY', start_period, download=False)
     aapl = Ticker('AAPL', start_period, download=False)
