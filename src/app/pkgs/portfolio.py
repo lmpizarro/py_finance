@@ -2,7 +2,11 @@
 """
 from ticker import Ticker
 from typing import List, Dict, Any
+import pandas as pd
+import yfinance as yf
+import pprint
 
+pp = pprint.PrettyPrinter(indent=4)
 
 class Portofolio:
     def __init__(self, name:str='po', 
@@ -57,3 +61,36 @@ class Portofolio:
         if self.benchmark != None:
             return self.ticker.beta(self.benchmark)
 
+def example_portfolio() -> None:
+    start_period = '2021-04-06'
+    spy = Ticker('SPY', start_period, download=False)
+    aapl = Ticker('AAPL', start_period, download=False)
+    amzn = Ticker('AMZN', start_period, download=False)
+    ko = Ticker('ko', start_period, download=False)
+    wmt = Ticker('WMT', start_period, download=False)
+    fb = Ticker('FB', start_period, download=False)
+
+    po = Portofolio(start=start_period)
+    
+    print('...........')
+
+    po.add(spy, 1)
+    po.add(aapl, 10)
+    po.add(amzn, 1)
+    po.add(ko, 50)
+    po.add(wmt, 20)
+    po.add(fb, 10)
+    po.set_benchmark(spy)
+
+    po.download()
+
+    print(po.elements())
+    po.set_adj_close()
+    print(po.ticker.adj_close)
+    print(po.benchmark.adj_close)
+    print(po.beta())
+    pp.pprint(po.ticker.get_props())
+
+
+if __name__ == "__main__":
+    example_portfolio()
