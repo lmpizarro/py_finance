@@ -1,1 +1,3 @@
-# py_finance
+# py_ticker
+
+copyright lmpizarro
