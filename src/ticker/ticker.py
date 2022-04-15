@@ -4,7 +4,9 @@ from sklearn.linear_model import LinearRegression
 import pandas as pd
 import matplotlib.pyplot as plt
 import pprint
-from typing import Dict, Any
+from typing import Dict, Any, List
+
+
 
 pp = pprint.PrettyPrinter(indent=4)
 
@@ -25,7 +27,7 @@ class Ticker:
         else:
             self.adj_close = None
 
-    def set_adj_close(self, adj_close):
+    def set_adj_close(self, adj_close: pd.Series):
         self.adj_close = adj_close
         self.close_props()
         self.returns_props()
@@ -44,7 +46,7 @@ class Ticker:
         self.returns_std_pos = self.pct_change[self.pct_change>0].std()
         self.returns_std = np.array(self.pct_change).std()
 
-    def get_props(self) -> Dict[str: Any]:
+    def get_props(self) -> Dict[str, Any]:
         return {
                 'ticker' : self.ticker,
                 'prices': {
@@ -72,7 +74,7 @@ class Ticker:
                     }
                 }
 
-    def beta(self, ticker: "Ticker"):
+    def beta(self, ticker: "Ticker") -> float:
 
         x = np.array(ticker.pct_change).reshape((-1,1))
         y = np.array(self.pct_change)
@@ -81,7 +83,7 @@ class Ticker:
 
         return beta
     
-    def last_close(self):
+    def last_close(self) -> float:
         return self.adj_close.iloc[-1]
 
     def first_close(self):
@@ -111,10 +113,10 @@ class Portofolio:
         
         self.components[ticker.ticker] = {'ticker': ticker, 'shares': shares}
 
-    def elements(self):
+    def elements(self) -> List[Dict[str, Any]]:
         return [{'ticker': e, 'shares': self.components[e]['shares']} for e in self.components]
 
-    def set_adj_close(self):
+    def set_adj_close(self) -> None:
         list_close = []
         names = []
         for e in self.components:
@@ -130,10 +132,10 @@ class Portofolio:
         c['s'] = c.sum(axis=1)
         self.ticker.set_adj_close(c['s'])
     
-    def set_benchmark(self, benchmark: Ticker):
+    def set_benchmark(self, benchmark: Ticker) -> None:
         self.benchmark = benchmark
 
-    def download(self):
+    def download(self) -> None:
         symbols = [c.upper() for c in self.components]
         
         data = yf.download(symbols, self.start)['Adj Close']
@@ -146,7 +148,7 @@ class Portofolio:
         if self.benchmark != None:
             self.benchmark.set_adj_close(data[self.benchmark.ticker])
 
-    def beta(self):
+    def beta(self) -> float:
         if self.benchmark != None:
             return self.ticker.beta(self.benchmark)
 
@@ -193,4 +195,4 @@ if __name__ == "__main__":
     benchmark = ['SPY']
     portfolio = ['AMZN', 'AAPL', 'WMT', 'KO']
 
-    example_beta()
+    example_portfolio()
