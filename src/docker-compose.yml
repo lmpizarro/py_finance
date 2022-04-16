@@ -2,9 +2,26 @@ version: '3'
 
 services:
   web:
-    build: .
-    command: uvicorn app.main:app --host 0.0.0.0
+    build: ./app
+    command: uvicorn main:app --host 0.0.0.0
     volumes:
-      - .:/app
+      - ./data:/data
     ports:
       - 8008:8000
+    depends_on:
+      - redis
+
+  worker:
+    build: ./app
+    volumes:
+      - ./project:/code/app
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    command: celery --app=worker worker --loglevel=info
+    depends_on:
+      - web
+      - redis
+
+  redis:
+    image: redis:6-alpine

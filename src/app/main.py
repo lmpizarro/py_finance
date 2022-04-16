@@ -1,6 +1,11 @@
-from typing import Optional
-from app.pkgs.ticker import Ticker
+from typing import List
+from pkgs.ticker import Ticker
+from pkgs.portfolio import PortofolioDescription
 from datetime import datetime, timedelta
+from tinydb import TinyDB, Query
+from worker import create_task
+
+db = TinyDB('/data/db.json')
 
 from fastapi import FastAPI
 
@@ -22,3 +27,15 @@ def read_item(ticker_id: str):
     start_date = now - one_year
     beta_ticker = beta(ticker_id, start_date.strftime('%Y-%m-%d'))
     return {'ticker': ticker_id, 'beta': beta_ticker}
+
+import uuid
+
+@app.post("/portfolio/")
+def portfolio(components: PortofolioDescription):
+
+    components.un_id = str(uuid.uuid4())
+    db.insert(components.dict())
+
+    create_task.delay(components.json())
+
+    return components

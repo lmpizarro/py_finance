@@ -1,7 +1,7 @@
 """
 """
-from ticker import Ticker
-from typing import List, Dict, Any
+from pkgs.ticker import Ticker
+from typing import List, Dict, Any, Optional
 import pandas as pd
 import yfinance as yf
 import pprint
@@ -9,12 +9,18 @@ from pydantic import BaseModel, Field
 
 
 class PortfolioComponent(BaseModel):
-    shares : int = Field(..., ge=1, default=1)
-    symbol : str = Field(..., default='AAPL')
+    shares : float = Field(gt=0, default=1.0)
+    symbol : str = Field(default='AAPL')
+
+class PortofolioDescription(BaseModel):
+    components : List[PortfolioComponent]
+    name : str = Field(default='myportfolio')
+    start_period: str = Field(default='2021-04-04')
+    un_id: Optional[str] = Field(default='')
 
 pp = pprint.PrettyPrinter(indent=4)
 
-class Portofolio:
+class Portfolio:
     def __init__(self, name:str='po', 
                  start:str ='2021-04-11') -> None:
         self.start = start
@@ -69,6 +75,22 @@ class Portofolio:
         if self.benchmark != None:
             return self.ticker.beta(self.benchmark)
 
+    @classmethod
+    def create_portfolio(cls, portfolio_list: List[PortfolioComponent], 
+                     start_period: str,
+                     name: str='myportfolio') -> "Portfolio":
+
+            po = Portfolio(start=start_period, name=name)
+
+            for e in portfolio_list:
+                tck = Ticker(e.symbol, start_period, download=False)
+                po.add(tck, e.shares)
+        
+            return po
+
+    def __repr__(self) -> str:
+        return str([(e, self.components[e]['shares']) for e in self.components if e != self.benchmark.ticker])
+
 def example_portfolio() -> None:
     start_period = '2021-04-06'
     spy = Ticker('SPY', start_period, download=False)
@@ -78,7 +100,7 @@ def example_portfolio() -> None:
     wmt = Ticker('WMT', start_period, download=False)
     fb = Ticker('FB', start_period, download=False)
 
-    po = Portofolio(start=start_period)
+    po = Portfolio(start=start_period)
     
     print('...........')
 
@@ -100,5 +122,24 @@ def example_portfolio() -> None:
     pp.pprint(po.ticker.get_props())
 
 
+def example_model():
+    start_period = '2021-04-06'
+    spy = Ticker('SPY', start_period, download=False)
+
+    comps = [
+                PortfolioComponent(shares=2, symbol='PG'),
+                PortfolioComponent(shares=3, symbol='AMGN'),
+                PortfolioComponent(shares=3, symbol='SPY'),
+                ]
+            
+    po = Portfolio.create_portfolio(comps, start_period)
+    po.set_benchmark(spy)
+    po.download()
+    po.set_adj_close()
+
+    print(po)
+    print(po.beta())
+
+
 if __name__ == "__main__":
-    example_portfolio()
+    example_model()
