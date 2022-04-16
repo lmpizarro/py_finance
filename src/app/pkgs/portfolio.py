@@ -16,7 +16,7 @@ class PortofolioDescription(BaseModel):
     components : List[PortfolioComponent]
     name : str = Field(default='myportfolio')
     start_period: str = Field(default='2021-04-04')
-    un_id: Optional[str] = Field(default='')
+    task_id: Optional[str] = Field(default='')
 
 pp = pprint.PrettyPrinter(indent=4)
 

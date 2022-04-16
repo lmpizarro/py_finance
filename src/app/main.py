@@ -1,4 +1,3 @@
-from typing import List
 from pkgs.fin_time_serie import FinTimeSerie
 from pkgs.portfolio import PortofolioDescription
 from datetime import datetime, timedelta
@@ -28,14 +27,11 @@ def read_item(ticker_id: str):
     beta_ticker = beta(ticker_id, start_date.strftime('%Y-%m-%d'))
     return {'ticker': ticker_id, 'beta': beta_ticker}
 
-import uuid
 
 @app.post("/portfolio/")
 def portfolio(components: PortofolioDescription):
 
-    components.un_id = str(uuid.uuid4())
+    task = create_task.delay(components.json())
+    components.task_id = task.id
     db.insert(components.dict())
-
-    create_task.delay(components.json())
-
     return components
