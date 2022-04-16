@@ -6,13 +6,16 @@ from pkgs.portfolio import PortofolioDescription
 from tinydb import TinyDB
 
 celery = Celery(__name__)
-celery.conf.broker_url = os.environ.get("CELERY_BROKER_URL", "redis://redis:6379")
-celery.conf.result_backend = os.environ.get("CELERY_RESULT_BACKEND", "redis://redis:6379")
+celery.conf.broker_url = os.environ.get("CELERY_BROKER_URL", "redis://redis:6379/0")
+celery.conf.result_backend = os.environ.get("CELERY_RESULT_BACKEND", "redis://redis:6379/0")
 
-db = TinyDB('/data/db.json')
+db = TinyDB('/data/db_res.json')
 
 
 @celery.task(name="create_task", bind=True)
 def create_task(self, parameters: PortofolioDescription):
-    print('request id ', self.request.id)
+    
+    result = {'task_id': str(self.request.id)}
+    doc_id = db.insert(result)
+    print(f'request id {self.request.id} doc id {doc_id}')
     return True
