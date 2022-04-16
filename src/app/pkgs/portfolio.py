@@ -5,19 +5,32 @@ from typing import List, Dict, Any, Optional
 import pandas as pd
 import yfinance as yf
 from pydantic import BaseModel, Field
+from pkgs.defaults import Defaults
 
 __all__ = ['Portfolio', 'PortfolioComponent', 'PortofolioDescription']
 
+
+
 class PortfolioComponent(BaseModel):
-    quantity : float = Field(gt=0, default=1.0)
-    symbol : str = Field(default='AAPL')
+    quantity: float = Field(gt=0, default=1.0)
+    symbol: str = Field(default='AAPL')
+    investment: float = Field(default=10000.0)
+    by_quantity: bool = Field(default=True)
 
 class PortofolioDescription(BaseModel):
     components : List[PortfolioComponent]
     name : str = Field(default='myportfolio')
-    start_period: str = Field(default='2021-04-04')
+    start_period: str = Field(default=Defaults.start_date())
+    end_period: str = Field(default=Defaults.end_date())
     task_id: Optional[str] = Field(default='')
     benchmark: str = Field(default='SPY')
+
+    @classmethod
+    def from_dict(cls, dict):
+        obj = cls({})
+        obj.__dict__.update(dict)
+        return obj
+
 
 class Portfolio:
     def __init__(self, name:str='po', 

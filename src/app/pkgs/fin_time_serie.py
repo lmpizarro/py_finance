@@ -2,22 +2,27 @@ import yfinance as yf
 import numpy as np
 from sklearn.linear_model import LinearRegression
 import pandas as pd
-import matplotlib.pyplot as plt
-from typing import Dict, Any, List
+from typing import Dict, Any
+from pkgs.defaults import Defaults
 
 __all__ = ['FinTimeSerie']
 
 class FinTimeSerie:
 
     def __init__(self, symbol: str, 
-                 start_period: str, download: bool=True) -> None:
+                 start_period: str,
+                 end_period: str=None,
+                 download: bool=True) -> None:
 
-        self.start_period = start_period
         self.symbol = symbol.upper()
         self.pct_change = None
+        self.end_period = end_period
+        if end_period == None:
+            self.end_period = Defaults.end_date()
+        self.start_period = start_period
 
         if download:
-            self.adj_close = yf.download(symbol, start_period)['Adj Close']
+            self.adj_close = yf.download(symbol, start_period, end_period)['Adj Close']
             self.adj_close = self.adj_close.fillna(0)
             self.close_props()
             self.returns_props()
