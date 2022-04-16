@@ -3,10 +3,9 @@ import numpy as np
 from sklearn.linear_model import LinearRegression
 import pandas as pd
 import matplotlib.pyplot as plt
-import pprint
 from typing import Dict, Any, List
 
-pp = pprint.PrettyPrinter(indent=4)
+__all__ = ['FinTimeSerie']
 
 class FinTimeSerie:
 
@@ -14,7 +13,7 @@ class FinTimeSerie:
                  start_period: str, download: bool=True) -> None:
 
         self.start_period = start_period
-        self.ticker = symbol.upper()
+        self.symbol = symbol.upper()
         self.pct_change = None
 
         if download:
@@ -46,7 +45,7 @@ class FinTimeSerie:
 
     def get_props(self) -> Dict[str, Any]:
         return {
-                'ticker' : self.ticker,
+                'ticker' : self.symbol,
                 'prices': {
                     'std': np.array(self.adj_close).std(),
                     'min': np.array(self.adj_close).min(),
@@ -97,14 +96,3 @@ class FinTimeSerie:
     def sortino(self) -> float:
         return self.period_return() / self.returns_std_neg
 
-def example_beta() -> None:
-    start_period = '2021-04-06'
-    spy = FinTimeSerie('SPY', start_period)
-    aapl = FinTimeSerie('AAPL', start_period)
-    print(aapl.beta(spy))
-
-    pp.pprint(spy.get_props())
-
-
-if __name__ == "__main__":
-    example_beta()

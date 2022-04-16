@@ -4,9 +4,9 @@ from pkgs.fin_time_serie import FinTimeSerie
 from typing import List, Dict, Any, Optional
 import pandas as pd
 import yfinance as yf
-import pprint
 from pydantic import BaseModel, Field
 
+__all__ = ['Portfolio', 'PortfolioComponent', 'PortofolioDescription']
 
 class PortfolioComponent(BaseModel):
     quantity : float = Field(gt=0, default=1.0)
@@ -19,40 +19,36 @@ class PortofolioDescription(BaseModel):
     task_id: Optional[str] = Field(default='')
     benchmark: str = Field(default='SPY')
 
-pp = pprint.PrettyPrinter(indent=4)
-
 class Portfolio:
     def __init__(self, name:str='po', 
-                 start_period:str ='2021-04-11') -> None:
+                 start_period:str ='2021-04-11',
+                 benchmark_symbol='SPY') -> None:
+
         self.start_period = start_period
         self.time_serie: FinTimeSerie = FinTimeSerie(name, 
                                                  start_period=start_period, 
                                                  download=False)
         self.benchmark: FinTimeSerie = None
-        self.components = {}
+        self.components : Dict[Dict[str,Any]] = {}
+        self.benchmark_symbol = benchmark_symbol
 
-    def add(self,time_serie:FinTimeSerie, quantity: int):
+    def add(self,time_serie:FinTimeSerie, quantity: float):
         if time_serie.start_period != self.start_period:
             raise Exception
         
-        self.components[time_serie.ticker] = {'ticker': time_serie, 'shares': quantity}
+        self.components[time_serie.symbol] = {'ticker': time_serie, 'shares': quantity}
 
-    def elements(self) -> List[Dict[str, Any]]:
-        return [{'ticker': e, 'shares': self.components[e]['shares']} \
-                                            for e in self.components]
+    def elements(self) -> List[Dict[str, float]]:
+        return [{'ticker': e, 'shares': self.components[e]["shares"]} \
+                for e in self.components]
 
     def set_adj_close(self) -> None:
         list_close = []
         names = []
         for e in self.components:
-            if self.benchmark != None and e != self.benchmark.ticker or \
-                                               self.benchmark == None:
-                names.append(e)
-
-                list_close.append(self.components[e]['ticker'].adj_close * \
-                                  self.components[e]['shares'])
-            elif e == self.benchmark.ticker:
-                self.benchmark.set_adj_close(self.components[e]['ticker'].adj_close)
+            names.append(e)
+            list_close.append(self.components[e]['ticker'].adj_close * \
+                              self.components[e]['shares'])
             
         
         c = pd.concat(list_close, axis=1, names=names)
@@ -64,6 +60,8 @@ class Portfolio:
 
     def download(self) -> None:
         symbols = [c.upper() for c in self.components]
+        if self.benchmark_symbol not in symbols:
+            symbols.append(self.benchmark_symbol)
         
         data = yf.download(symbols, self.start_period)['Adj Close']
         data.dropna(inplace=True)
@@ -72,8 +70,8 @@ class Portfolio:
         for c in self.components:
             adj_close = data[c]
             self.components[c]['ticker'].set_adj_close(adj_close)
-        if self.benchmark != None:
-            self.benchmark.set_adj_close(data[self.benchmark.ticker])
+
+        self.benchmark.set_adj_close(data[self.benchmark_symbol])
 
     def beta(self) -> float:
         if self.benchmark != None:
@@ -93,57 +91,13 @@ class Portfolio:
             return po
 
     def __repr__(self) -> str:
-        return str([(e, self.components[e]['shares']) for e in self.components if e != self.benchmark.ticker])
+        return str([(e, self.components[e]['shares']) for e in self.components \
+                     if e != self.benchmark.symbol])
 
-def example_portfolio() -> None:
-    start_period = '2021-04-06'
-    spy = FinTimeSerie('SPY', start_period, download=False)
-    aapl = FinTimeSerie('AAPL', start_period, download=False)
-    amzn = FinTimeSerie('AMZN', start_period, download=False)
-    ko = FinTimeSerie('ko', start_period, download=False)
-    wmt = FinTimeSerie('WMT', start_period, download=False)
-    fb = FinTimeSerie('FB', start_period, download=False)
-
-    po = Portfolio(start_period=start_period)
-    
-    print('...........')
-
-    po.add(spy, 1)
-    po.add(aapl, 10)
-    po.add(amzn, 1)
-    po.add(ko, 50)
-    po.add(wmt, 20)
-    po.add(fb, 10)
-    po.set_benchmark(spy)
-
-    po.download()
-
-    print(po.elements())
-    po.set_adj_close()
-    print(po.time_serie.adj_close)
-    print(po.benchmark.adj_close)
-    print(po.beta())
-    pp.pprint(po.time_serie.get_props())
-
-
-def example_model():
-    start_period = '2021-04-06'
-    spy = FinTimeSerie('SPY', start_period, download=False)
-
-    comps = [
-                PortfolioComponent(shares=2, symbol='PG'),
-                PortfolioComponent(shares=3, symbol='AMGN'),
-                PortfolioComponent(shares=3, symbol='SPY'),
-                ]
+    def all_betas(self):
+        betas = {}
+        for e in self.components:
+            beta = self.components[e]['ticker'].beta(self.benchmark)
+            betas[e] = beta
+        return betas
             
-    po = Portfolio.create_portfolio(comps, start_period)
-    po.set_benchmark(spy)
-    po.download()
-    po.set_adj_close()
-
-    print(po)
-    print(po.beta())
-
-
-if __name__ == "__main__":
-    example_model()
