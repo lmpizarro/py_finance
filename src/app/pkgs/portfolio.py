@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 
 
 class PortfolioComponent(BaseModel):
-    shares : float = Field(gt=0, default=1.0)
+    quantity : float = Field(gt=0, default=1.0)
     symbol : str = Field(default='AAPL')
 
 class PortofolioDescription(BaseModel):
@@ -23,20 +23,23 @@ pp = pprint.PrettyPrinter(indent=4)
 
 class Portfolio:
     def __init__(self, name:str='po', 
-                 start:str ='2021-04-11') -> None:
-        self.start = start
-        self.ticker: FinTimeSerie = FinTimeSerie(name, start=start, download=False)
+                 start_period:str ='2021-04-11') -> None:
+        self.start_period = start_period
+        self.time_serie: FinTimeSerie = FinTimeSerie(name, 
+                                                 start_period=start_period, 
+                                                 download=False)
         self.benchmark: FinTimeSerie = None
         self.components = {}
 
-    def add(self,ticker:FinTimeSerie, shares: int):
-        if ticker.start != self.start:
+    def add(self,time_serie:FinTimeSerie, quantity: int):
+        if time_serie.start_period != self.start_period:
             raise Exception
         
-        self.components[ticker.ticker] = {'ticker': ticker, 'shares': shares}
+        self.components[time_serie.ticker] = {'ticker': time_serie, 'shares': quantity}
 
     def elements(self) -> List[Dict[str, Any]]:
-        return [{'ticker': e, 'shares': self.components[e]['shares']} for e in self.components]
+        return [{'ticker': e, 'shares': self.components[e]['shares']} \
+                                            for e in self.components]
 
     def set_adj_close(self) -> None:
         list_close = []
@@ -54,7 +57,7 @@ class Portfolio:
         
         c = pd.concat(list_close, axis=1, names=names)
         c['s'] = c.sum(axis=1)
-        self.ticker.set_adj_close(c['s'])
+        self.time_serie.set_adj_close(c['s'])
     
     def set_benchmark(self, benchmark: FinTimeSerie) -> None:
         self.benchmark = benchmark
@@ -62,7 +65,7 @@ class Portfolio:
     def download(self) -> None:
         symbols = [c.upper() for c in self.components]
         
-        data = yf.download(symbols, self.start)['Adj Close']
+        data = yf.download(symbols, self.start_period)['Adj Close']
         data.dropna(inplace=True)
         print(data.tail(3))
 
@@ -74,18 +77,18 @@ class Portfolio:
 
     def beta(self) -> float:
         if self.benchmark != None:
-            return self.ticker.beta(self.benchmark)
+            return self.time_serie.beta(self.benchmark)
 
     @classmethod
     def create_portfolio(cls, portfolio_list: List[PortfolioComponent], 
                      start_period: str,
                      name: str='myportfolio') -> "Portfolio":
 
-            po = Portfolio(start=start_period, name=name)
+            po = Portfolio(start_period=start_period, name=name)
 
             for e in portfolio_list:
                 tck = FinTimeSerie(e.symbol, start_period, download=False)
-                po.add(tck, e.shares)
+                po.add(tck, e.quantity)
         
             return po
 
@@ -101,7 +104,7 @@ def example_portfolio() -> None:
     wmt = FinTimeSerie('WMT', start_period, download=False)
     fb = FinTimeSerie('FB', start_period, download=False)
 
-    po = Portfolio(start=start_period)
+    po = Portfolio(start_period=start_period)
     
     print('...........')
 
@@ -117,10 +120,10 @@ def example_portfolio() -> None:
 
     print(po.elements())
     po.set_adj_close()
-    print(po.ticker.adj_close)
+    print(po.time_serie.adj_close)
     print(po.benchmark.adj_close)
     print(po.beta())
-    pp.pprint(po.ticker.get_props())
+    pp.pprint(po.time_serie.get_props())
 
 
 def example_model():

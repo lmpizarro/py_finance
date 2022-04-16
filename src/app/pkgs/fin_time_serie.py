@@ -11,14 +11,14 @@ pp = pprint.PrettyPrinter(indent=4)
 class FinTimeSerie:
 
     def __init__(self, symbol: str, 
-                 start: str, download: bool=True) -> None:
+                 start_period: str, download: bool=True) -> None:
 
-        self.start = start
+        self.start_period = start_period
         self.ticker = symbol.upper()
         self.pct_change = None
 
         if download:
-            self.adj_close = yf.download(symbol, start)['Adj Close']
+            self.adj_close = yf.download(symbol, start_period)['Adj Close']
             self.adj_close = self.adj_close.fillna(0)
             self.close_props()
             self.returns_props()
@@ -52,7 +52,7 @@ class FinTimeSerie:
                     'min': np.array(self.adj_close).min(),
                     'max': np.array(self.adj_close).max(),
                     'mean': np.array(self.adj_close).mean(),
-                    'return': self.final_return(),
+                    'return': self.period_return(),
                     'first': self.first_close(),
                     'last': self.last_close(),
                     'max_draw_pct': np.abs(self.drawdown.min()) / self.adj_close.max(),
@@ -68,7 +68,7 @@ class FinTimeSerie:
                     'mean': np.array(self.pct_change).mean(),
                     'sortino': self.sortino(),
                     'sharpe': self.sharpe(),
-                    'calmar': self.adj_close.max() * self.final_return() / np.abs(self.drawdown.min())
+                    'calmar': self.adj_close.max() * self.period_return() / np.abs(self.drawdown.min())
                     }
                 }
 
@@ -87,15 +87,15 @@ class FinTimeSerie:
     def first_close(self):
         return self.adj_close.iloc[0]
 
-    def final_return(self) -> float:
+    def period_return(self) -> float:
         r = (self.last_close() - self.first_close()) / self.first_close()
         return r
 
     def sharpe(self) -> float:
-        return self.final_return() / self.returns_std
+        return self.period_return() / self.returns_std
 
     def sortino(self) -> float:
-        return self.final_return() / self.returns_std_neg
+        return self.period_return() / self.returns_std_neg
 
 def example_beta() -> None:
     start_period = '2021-04-06'

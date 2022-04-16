@@ -17,5 +17,5 @@ def create_task(self, parameters: PortofolioDescription):
     
     result = {'task_id': str(self.request.id)}
     doc_id = db.insert(result)
-    print(f'request id {self.request.id} doc id {doc_id}')
-    return True
+    
+    return True, doc_id, self.request.id
