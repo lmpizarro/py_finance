@@ -17,6 +17,7 @@ class PortofolioDescription(BaseModel):
     name : str = Field(default='myportfolio')
     start_period: str = Field(default='2021-04-04')
     task_id: Optional[str] = Field(default='')
+    benchmark: str = Field(default='SPY')
 
 pp = pprint.PrettyPrinter(indent=4)
 
