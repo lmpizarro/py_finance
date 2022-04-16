@@ -1,6 +1,6 @@
 """
 """
-from pkgs.ticker import Ticker
+from pkgs.fin_time_serie import FinTimeSerie
 from typing import List, Dict, Any, Optional
 import pandas as pd
 import yfinance as yf
@@ -24,11 +24,11 @@ class Portfolio:
     def __init__(self, name:str='po', 
                  start:str ='2021-04-11') -> None:
         self.start = start
-        self.ticker: Ticker = Ticker(name, start=start, download=False)
-        self.benchmark: Ticker = None
+        self.ticker: FinTimeSerie = FinTimeSerie(name, start=start, download=False)
+        self.benchmark: FinTimeSerie = None
         self.components = {}
 
-    def add(self,ticker:Ticker, shares: int):
+    def add(self,ticker:FinTimeSerie, shares: int):
         if ticker.start != self.start:
             raise Exception
         
@@ -55,7 +55,7 @@ class Portfolio:
         c['s'] = c.sum(axis=1)
         self.ticker.set_adj_close(c['s'])
     
-    def set_benchmark(self, benchmark: Ticker) -> None:
+    def set_benchmark(self, benchmark: FinTimeSerie) -> None:
         self.benchmark = benchmark
 
     def download(self) -> None:
@@ -83,7 +83,7 @@ class Portfolio:
             po = Portfolio(start=start_period, name=name)
 
             for e in portfolio_list:
-                tck = Ticker(e.symbol, start_period, download=False)
+                tck = FinTimeSerie(e.symbol, start_period, download=False)
                 po.add(tck, e.shares)
         
             return po
@@ -93,12 +93,12 @@ class Portfolio:
 
 def example_portfolio() -> None:
     start_period = '2021-04-06'
-    spy = Ticker('SPY', start_period, download=False)
-    aapl = Ticker('AAPL', start_period, download=False)
-    amzn = Ticker('AMZN', start_period, download=False)
-    ko = Ticker('ko', start_period, download=False)
-    wmt = Ticker('WMT', start_period, download=False)
-    fb = Ticker('FB', start_period, download=False)
+    spy = FinTimeSerie('SPY', start_period, download=False)
+    aapl = FinTimeSerie('AAPL', start_period, download=False)
+    amzn = FinTimeSerie('AMZN', start_period, download=False)
+    ko = FinTimeSerie('ko', start_period, download=False)
+    wmt = FinTimeSerie('WMT', start_period, download=False)
+    fb = FinTimeSerie('FB', start_period, download=False)
 
     po = Portfolio(start=start_period)
     
@@ -124,7 +124,7 @@ def example_portfolio() -> None:
 
 def example_model():
     start_period = '2021-04-06'
-    spy = Ticker('SPY', start_period, download=False)
+    spy = FinTimeSerie('SPY', start_period, download=False)
 
     comps = [
                 PortfolioComponent(shares=2, symbol='PG'),

@@ -1,5 +1,5 @@
 from typing import List
-from pkgs.ticker import Ticker
+from pkgs.fin_time_serie import FinTimeSerie
 from pkgs.portfolio import PortofolioDescription
 from datetime import datetime, timedelta
 from tinydb import TinyDB, Query
@@ -12,8 +12,8 @@ from fastapi import FastAPI
 app = FastAPI()
 
 def beta(ticker: str = 'AAPL', start_period='2021-04-06') -> None:
-    spy = Ticker('SPY', start_period)
-    ticker_beta = Ticker(ticker, start_period)
+    spy = FinTimeSerie('SPY', start_period)
+    ticker_beta = FinTimeSerie(ticker, start_period)
     return ticker_beta.beta(spy)
 
 @app.get("/")

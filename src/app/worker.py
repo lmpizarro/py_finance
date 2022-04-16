@@ -13,4 +13,4 @@ celery.conf.result_backend = os.environ.get("CELERY_RESULT_BACKEND", "redis://re
 @celery.task(name="create_task")
 def create_task(parameters):
 
-    return parameters
+    return True

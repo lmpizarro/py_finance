@@ -8,7 +8,7 @@ from typing import Dict, Any, List
 
 pp = pprint.PrettyPrinter(indent=4)
 
-class Ticker:
+class FinTimeSerie:
 
     def __init__(self, symbol: str, 
                  start: str, download: bool=True) -> None:
@@ -72,7 +72,7 @@ class Ticker:
                     }
                 }
 
-    def beta(self, ticker: "Ticker") -> float:
+    def beta(self, ticker: "FinTimeSerie") -> float:
 
         x = np.array(ticker.pct_change).reshape((-1,1))
         y = np.array(self.pct_change)
@@ -99,8 +99,8 @@ class Ticker:
 
 def example_beta() -> None:
     start_period = '2021-04-06'
-    spy = Ticker('SPY', start_period)
-    aapl = Ticker('AAPL', start_period)
+    spy = FinTimeSerie('SPY', start_period)
+    aapl = FinTimeSerie('AAPL', start_period)
     print(aapl.beta(spy))
 
     pp.pprint(spy.get_props())
