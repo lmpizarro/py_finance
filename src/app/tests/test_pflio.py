@@ -29,6 +29,7 @@ def example_portfolio() -> None:
 
     po.download()
 
+
     print(po.elements())
     po.set_adj_close()
     print(po.time_serie.adj_close)

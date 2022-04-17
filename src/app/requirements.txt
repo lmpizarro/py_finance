@@ -9,8 +9,7 @@ matplotlib==3.4.2
 tinydb==4.7.0
 celery[redis]
 redis==3.5.3
-
-
+pyportfolioopt==1.5.2
 
 
 

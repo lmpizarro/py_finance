@@ -9,13 +9,12 @@ from pkgs.defaults import Defaults
 
 __all__ = ['Portfolio', 'PortfolioComponent', 'PortofolioDescription']
 
-
-
 class PortfolioComponent(BaseModel):
     quantity: float = Field(gt=0, default=1.0)
     symbol: str = Field(default='AAPL')
     investment: float = Field(default=10000.0)
     by_quantity: bool = Field(default=True)
+
 
 class PortofolioDescription(BaseModel):
     components : List[PortfolioComponent]
@@ -44,6 +43,7 @@ class Portfolio:
         self.benchmark: FinTimeSerie = None
         self.components : Dict[Dict[str,Any]] = {}
         self.benchmark_symbol = benchmark_symbol
+        self.yf_data:pd.DataFrame = None
 
     def add(self,time_serie:FinTimeSerie, quantity: float):
         if time_serie.start_period != self.start_period:
@@ -76,15 +76,14 @@ class Portfolio:
         if self.benchmark_symbol not in symbols:
             symbols.append(self.benchmark_symbol)
         
-        data = yf.download(symbols, self.start_period)['Adj Close']
-        data.dropna(inplace=True)
-        print(data.tail(3))
+        self.yf_data = yf.download(symbols, self.start_period)['Adj Close']
+        self.yf_data.dropna(inplace=True)
 
         for c in self.components:
-            adj_close = data[c]
+            adj_close = self.yf_data[c]
             self.components[c]['ticker'].set_adj_close(adj_close)
 
-        self.benchmark.set_adj_close(data[self.benchmark_symbol])
+        self.benchmark.set_adj_close(self.yf_data[self.benchmark_symbol])
 
     def beta(self) -> float:
         if self.benchmark != None:
