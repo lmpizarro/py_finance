@@ -1,6 +1,6 @@
 import setup
 from pkgs.portfolio import Portfolio, PortfolioComponent
-from pkgs.optimizer import hrp_opt, efficient_frontier
+from pkgs.optimizer import hrp_opt, efficient_frontier, cvar
 from pkgs.fin_time_serie import FinTimeSerie
 
 def create_portfolio() -> Portfolio:
@@ -35,7 +35,10 @@ if __name__ == '__main__':
 
     print(out_p)
 
-    portf = create_portfolio()
     out_p = efficient_frontier(portf, total_portfolio_value=100000)
+
+    print(out_p)
+
+    out_p = cvar(portf, total_portfolio_value=100000)
 
     print(out_p)

@@ -4,6 +4,7 @@ from pkgs.portfolio import Portfolio
 from pypfopt.expected_returns import mean_historical_return
 from pypfopt.risk_models import CovarianceShrinkage
 from pypfopt.efficient_frontier import EfficientFrontier
+from pypfopt.efficient_frontier import EfficientCVaR
 
 
 def hrp_opt(portfolio: Portfolio, total_portfolio_value):
@@ -14,11 +15,12 @@ def hrp_opt(portfolio: Portfolio, total_portfolio_value):
     returns = yf_data.pct_change().dropna()
 
     hrp = HRPOpt(returns)
-    hrp_weights = hrp.optimize()
+    weights = hrp.optimize()
+    cleaned_weights = hrp.clean_weights()
 
     hrp.portfolio_performance(verbose=True)
 
-    da_hrp = DiscreteAllocation(hrp_weights, 
+    da_hrp = DiscreteAllocation(weights, 
                                 latest_prices, 
                                 total_portfolio_value=total_portfolio_value)
 
@@ -28,7 +30,8 @@ def hrp_opt(portfolio: Portfolio, total_portfolio_value):
          'total_portfolio_value': total_portfolio_value,
          'funds_remaining': leftover,
          'allocation': allocation,
-         'weights': dict(hrp_weights)
+         'weights': dict(weights),
+         'clean_weights': dict(cleaned_weights)
     }
 
 
@@ -42,7 +45,6 @@ def efficient_frontier(portfolio: Portfolio, total_portfolio_value):
     weights = ef.max_sharpe()
 
     cleaned_weights = ef.clean_weights()
-    print(dict(cleaned_weights))
 
     ef.portfolio_performance(verbose=True)
 
@@ -60,6 +62,32 @@ def efficient_frontier(portfolio: Portfolio, total_portfolio_value):
          'total_portfolio_value': total_portfolio_value,
          'funds_remaining': leftover,
          'allocation': allocation,
-         'weights': dict(weights)
+         'weights': dict(weights),
+         'clean_weights': dict(cleaned_weights)
     }
 
+
+def cvar(portfolio: Portfolio, total_portfolio_value):
+    yf_data = portfolio.yf_data
+
+    S = yf_data.cov()
+    mu = mean_historical_return(yf_data)
+    ef_cvar = EfficientCVaR(mu, S)
+    weights = ef_cvar.min_cvar()
+
+    cleaned_weights = ef_cvar.clean_weights()
+    latest_prices = get_latest_prices(yf_data)
+
+    da_cvar = DiscreteAllocation(weights, 
+                                 latest_prices, 
+                                 total_portfolio_value=total_portfolio_value)
+
+    allocation, leftover = da_cvar.greedy_portfolio()
+
+    return {
+         'total_portfolio_value': total_portfolio_value,
+         'funds_remaining': leftover,
+         'allocation': allocation,
+         'weights': dict(weights),
+         'clean_weights': dict(cleaned_weights)
+    }
