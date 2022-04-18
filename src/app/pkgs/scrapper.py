@@ -1,5 +1,6 @@
 from audioop import reverse
 from os import sync
+from typing import Dict, List, Any
 from bs4 import BeautifulSoup
 import requests
 from enum import Enum
@@ -30,7 +31,7 @@ class TickerScrappers:
         return TickerScrappers.filter(table)
 
     @staticmethod
-    def filter(table):
+    def filter(table) -> List[Dict[str,Any]]:
         tickers = set()
         for row in table.findAll('tr')[1:]:
             ticker = row.findAll('td')[1]
@@ -59,11 +60,45 @@ class TickerScrappers:
 
         return TickerScrappers.filter(table)
 
+    @staticmethod
+    def cedears():
+        url = 'https://www.comafi.com.ar/2254-CEDEAR-SHARES.note.aspx'
+        resp = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'})
+        soup = BeautifulSoup(resp.text,  features="lxml")
+        table = soup.find('table')
 
-if __name__ == '__main__':
-    symbols = TickerScrappers.sp500b_slickcharts()
-    print(symbols)
+        tickers = set()
+        for row in table.findAll('tr')[1:]:
+            ticker = row.findAll('td')[3].text
+            # ticker = row.findAll('td')[1]
+            # ticker = ticker.a.get('href').split('/')[2]
+            tickers.add(ticker)
 
-    symbols = TickerScrappers.nasdaq100_slickcharts()
-    print(symbols)
-    TickerScrappers.resp_text(TickerScrappers.nasdaq_url)
+        tickers = list(tickers)
+        tickers = [{'ticker': t, 'weight': 0, 'price': 0} for t in tickers]
+        return tickers
+
+    @staticmethod
+    def cedear_in_sp500():
+        sp500 = TickerScrappers.sp500b_slickcharts()
+        cedear = TickerScrappers.cedears()
+
+        sp500s = set()
+        sp500d = {}
+        for e in sp500:
+            sp500s.add(e['ticker'])
+            sp500d[e['ticker']] = e
+
+        cedears = set()
+        for e in cedear:
+            cedears.add(e['ticker'])
+
+        intersect = cedears.intersection(sp500s)
+
+        list_cedears = []
+        for e in intersect:
+            list_cedears.append(sp500d[e])
+
+        list_cedears.sort(key=lambda tup: tup['weight'], reverse=True)
+        return(list_cedears)
+      

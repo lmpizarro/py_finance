@@ -1,6 +1,5 @@
 from pypfopt import HRPOpt
 from pypfopt.discrete_allocation import DiscreteAllocation, get_latest_prices
-from pkgs.portfolio import Portfolio
 from pypfopt.expected_returns import mean_historical_return
 from pypfopt.risk_models import CovarianceShrinkage
 from pypfopt.efficient_frontier import EfficientFrontier
@@ -8,16 +7,21 @@ from pypfopt.efficient_frontier import EfficientCVaR
 from typing import List
 import yfinance as yf
 from pkgs.defaults import Defaults
+from empyrial import  Engine
+from collections import OrderedDict
 
 __all__ = ['Optimizer']
 
 class Optimizer:
     """
     https://pyportfolioopt.readthedocs.io/
+    https://github.com/robertmartin8/PyPortfolioOpt
     """
 
     def __init__(self, symbols: List[str], 
-                 total_portfolio_value, start_period, end_period):
+                 total_portfolio_value, start_period, 
+                 end_period):
+
         self.symbols = symbols
         self.start_period = start_period
         self.end_period = end_period
@@ -136,3 +140,37 @@ class Optimizer:
 
     def all(self):
         return [self.hrp_opt(), self.efficient_frontier(), self.cvar()]
+
+    def min_var(self, diversification=1):
+        engine = Engine(
+            start_date=self.start_period,
+            end_date=self.end_period,
+            portfolio=self.symbols,
+            optimizer='MINVAR',
+            diversification=diversification
+        )
+
+        weights = engine.weights
+        weights = [(e, weights[i]) for i,e in enumerate(self.symbols)]
+        weights = OrderedDict(weights)
+
+        latest_prices = get_latest_prices(self.df)
+        da_cvar = DiscreteAllocation(weights, 
+                                     latest_prices, 
+                                     total_portfolio_value=self.total_portfolio_value)
+
+
+
+        allocation, leftover = da_cvar.greedy_portfolio()
+
+        return {
+             'performance': {},
+             'optimizer': 'empyrial minvar',
+             'total_portfolio_value': self.total_portfolio_value,
+             'funds_remaining': leftover,
+             'allocation': allocation,
+             'weights': dict(weights),
+             'clean_weights': {} 
+        }
+
+       
