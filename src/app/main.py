@@ -1,10 +1,8 @@
-from pkgs.fin_time_serie import FinTimeSerie
 from pkgs.portfolio import PortofolioDescription
-from datetime import datetime, timedelta
-from tinydb import TinyDB, Query
-from worker import create_task, beta_portfolio
-
-from fastapi import FastAPI
+from tinydb import TinyDB
+from worker import create_task, beta_portfolio, ticker_info_task
+from typing import List, Optional
+from fastapi import FastAPI, Query
 from fastapi.encoders import jsonable_encoder
 import json
 
@@ -32,3 +30,12 @@ def portfolio(components: PortofolioDescription):
     components.task_id = task.id
     db.insert(components.dict())
     return components
+
+@app.get("/ticker_info")
+def ticker_info(q: Optional[List[str]] = Query(None)):
+    query_ticker = {'q': q}
+
+    for s in q:
+        task = ticker_info_task.delay(s)
+    return query_ticker
+

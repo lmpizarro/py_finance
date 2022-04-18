@@ -1,11 +1,14 @@
 import os
 import time
+from typing import List
 
 from pkgs.fin_time_serie import FinTimeSerie
 from pkgs.portfolio import PortofolioDescription
 from celery import Celery
 from tinydb import TinyDB
 import json
+
+import yfinance as yf
 
 from fastapi.encoders import jsonable_encoder
 
@@ -23,6 +26,17 @@ def create_task(self, parameters: PortofolioDescription):
     doc_id = db.insert(result)
     
     return True, doc_id, self.request.id
+
+@celery.task(name="ticker_info_task", bind=True)
+def ticker_info_task(self, symbol: str ):
+    
+    tic = yf.Ticker(symbol)
+    try:
+        response = f'{symbol} {tic.info["dividendYield"]}'
+    except Exception as e:
+        response = f'{symbol} {e}'
+
+    return True, response
 
 
 @celery.task(name="beta_portfolio", bind=True)
