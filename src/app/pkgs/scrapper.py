@@ -1,5 +1,3 @@
-from audioop import reverse
-from os import sync
 from typing import Dict, List, Any
 from bs4 import BeautifulSoup
 import requests

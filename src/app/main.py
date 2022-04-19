@@ -1,7 +1,9 @@
+
 from pkgs.portfolio import PortofolioDescription
+from pkgs.scrapper import TickerScrappers
 from tinydb import TinyDB
 from worker import create_task, beta_portfolio, ticker_info_task
-from typing import List, Optional
+from typing import List, Optional, Dict
 from fastapi import FastAPI, Query
 from fastapi.encoders import jsonable_encoder
 import json
@@ -38,4 +40,20 @@ def ticker_info(q: Optional[List[str]] = Query(None)):
     for s in q:
         task = ticker_info_task.delay(s)
     return query_ticker
+
+@app.get("/cedear_info")
+def cedear_info() -> List[Dict[str,str]]:
+
+    cedears = TickerScrappers.cedear_in_sp500()
+    symbols = [e['ticker'] for e in cedears]
+
+    task_ids = []
+    for ced in cedears:
+        symbol = ced['ticker']
+        task = ticker_info_task.delay(symbol)
+        ced['task_id'] = task.id
+
+        task_ids.append(ced)
+
+    return task_ids 
 
