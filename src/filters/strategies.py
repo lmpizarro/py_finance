@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.signal as signal
 import pandas as pd
-
+import numpy as np
 
 
 def strategy_01(ds:pd.Series, 
@@ -91,27 +91,88 @@ def test_strategy_01(symbols):
         plt.plot(np.asarray(df_out.buy_short), 'r')
         plt.show()
 
+def return_analysis(df):
+
+    ds = df.to_frame(name='Adj Close')
+
+    ds['log_return'] = np.log(ds['Adj Close']/ds['Adj Close'].shift(1))
+    daily_log_returns = ds['log_return'].mean()
+    daily_std = ds['log_return'].std()
+    annual_log_returns = ds['log_return'].mean() * 250
+    log_return_y = ds.log_return.tail(60)
+    day_log_return_y = log_return_y.mean()
+    annual_log_return_y = day_log_return_y * 250
+    delta_ann_log_return = annual_log_return_y > annual_log_returns
+
+    neg = ds['log_return'][ds['log_return'] < 0]
+    mean_neg = neg.mean()
+    std_neg = neg.std()
+
+    min_2sigma = daily_log_returns - 2 * daily_std
+    max_2sigma = daily_log_returns + 2 * daily_std
+
+
+    # print(t, daily_log_returns, annual_log_returns, mean_neg, limit_, 
+    #       round(delta_ann_log_return, 4))
+
+    # if delta_ann_log_return: 
+    #     print(t, annual_log_returns, annual_log_return_y)
+    condition = 'NOT KNO'
+    if annual_log_return_y < 0 and annual_log_returns < 0:
+       condition = 'NEG NEG'
+
+    if annual_log_return_y < 0 and annual_log_returns > 0:
+        condition =  'NEG POS'
+
+    if annual_log_return_y > 0 and annual_log_returns > 0:
+        condition = 'POS POS'
+
+    if annual_log_return_y > 0 and annual_log_returns < 0:
+        condition = 'POS NEG'
+
+
+    return(t, condition, round(min_2sigma, 4), 
+           round(100*annual_log_return_y,2))
 
 if __name__ == '__main__':
-    symbols_a = ['AAPL', 'AMZN', 'JPM', 'KO', 'DE', 'TSLA', 'TGT',
-                'FB', 'GOLD', 'INTC', 'IBM', 'MSFT', 'TXN', 'NVDA', 'PYPL']
+    symbols_a = ['GOLD', 'BRK-B', 'T', 'GILD', 'GSK', 'HON',
+                 'SONY', 'SQ', 'SPOT', 'SNA', 'SYY', 'TS', 
+                 'TX', 'ETSY', 'TWTR', 'GLOB', 'FDX','EBAY','BA', 
+                 'GE', 'BIIB', 'UNH', 'ORCL', 'LLY', 'ABT', 'AZN', 
+                 'LMT', 'V', 'DIS', 'TMO',   'MO',  'ADP', 'ACN', 'SBUX', 
+                 'XOM', 'CVX', 'BAC', 'SHEL', 'RTX',  'MA', 'BABA',  
+                 'CRM', 'SYY', 'VOD', 'PYPL', 'TSLA']
+    # test_strategy_01(to_sell)
 
-    symbols_b = ['WBA', 'GOOGL', 'AMAT', 'ADI', 'AMGN', 'YPF', 'GGAL', 
-                 'ABBV', 'ADBE', 'AVGO', 'CAT', 'COST', 'JNJ', 'MELI', 
-                 'MMM', 'NKE', 'NVS', 'PG', 'QCOM', 'TM', 'VZ', 
-                 'TSM', 'WMT']
+    BRB = ["ABBV", "ADBE", "ADI", "AMAT", "AMGN", "AVGO", "CAT",
+           "COST", "GGAL", "GOOGL", "JNJ", "MELI", "MMM",
+           "NKE", "NVS", "PG", "QCOM", "TM", "TSM", "VZ", "WBA",
+           "WMT", "YPF"]
 
-    symbols_d = ['SONY', 'SQ', 'SPOT', 'SNA', 'SYY', 'SBUX', 'VOD', 'TS', 
-                 'TX', 'GILD', 'ETSY', 'TWTR', 'GLOB', 'FDX','EBAY','BA', 
-                 'GE', 'BIIB', 'GSK', 'HON', 'XOM', 'CVX']
+    BRA = ["AAPL", "AMD", "AMZN", "CSCO", "DE", "FB", "HD", 
+           "IBM", "INTC", "JPM", "KO", "MSFT", "NVDA", "PEP", 
+           "PFE", "TGT", "TXN", 
+    ]
 
-    symbols_c = ['UNH', 'JPM', 'XOM', 'CVX', 'HD', 'BAC', 'PFE', 'LLY', 'ORCL', 
-               'PEP', 'ABT', 'SHEL', 'AZN', 'LMT', 'RTX', 'V', 'BRK-B', 'MA',
-               'DIS', 'BABA', 'TMO', 'ACN', 'CRM', 'T', 'AMD', 'MO', 'ADP']
+    BRAZ = ['VALE', 'PBR', 'ITUB', 'BBD', 'RIO', 'ABEV', 'BSBR', 'SID',
+            'CBD', 'GGB', 'VIV', 'UGP', 'SAN', 'BBVA', 'TEF',
+            'SIE', 'DMLRY']
 
-    to_buy = ['HD', 'SHEL', 'AZN', 'AMD', 'SYY', 'VOD']
+    BRB.extend(BRA)
+    symbols = symbols_a
 
-    to_sell = ['PYPL', 'TSLA', 'MSFT', 'TXN']
-    test_strategy_01(to_sell)
 
+    df = yf.download(symbols, '2016-1-1')['Adj Close']
+    for t in symbols:
+
+        r_an = return_analysis(df[t])
+        if r_an[3] > 0:
+            da = yf.Ticker(t)
+
+            divs = da.dividends.tail(1)
+            if len(divs):
+                sdiv = divs[0]
+                close = df[t].tail(1)[0]
+                pcdivclose = round(100 * sdiv / close,2)
+                print(r_an, pcdivclose, divs.index[0].to_pydatetime().strftime("%Y/%m/%d"))
 
