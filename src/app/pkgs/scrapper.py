@@ -1,4 +1,4 @@
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 from bs4 import BeautifulSoup
 import requests
 from enum import Enum
@@ -59,22 +59,27 @@ class TickerScrappers:
         return TickerScrappers.filter(table)
 
     @staticmethod
-    def cedears():
+    def cedears(dividend_freq: Optional[str]=None):
         url = 'https://www.comafi.com.ar/2254-CEDEAR-SHARES.note.aspx'
         resp = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'})
         soup = BeautifulSoup(resp.text,  features="lxml")
         table = soup.find('table')
 
-        tickers = set()
+        tickers = {}
         for row in table.findAll('tr')[1:]:
             ticker = row.findAll('td')[3].text
             # ticker = row.findAll('td')[1]
             # ticker = ticker.a.get('href').split('/')[2]
-            tickers.add(ticker)
-
-        tickers = list(tickers)
-        tickers = [{'ticker': t, 'weight': 0, 'price': 0} for t in tickers]
-        return tickers
+            div_freq = row.findAll('td')[8].text
+            ratio = row.findAll('td')[7].text
+            if ticker not in tickers:
+                tickers[ticker] = {'ticker': ticker,
+                                   'weight': 0,
+                                   'price': 0,
+                                   'div_freq': div_freq,
+                                   'ratio': ratio}
+        
+        return [tickers[e] for e in tickers]
 
     @staticmethod
     def cedear_in_sp500():
@@ -88,15 +93,35 @@ class TickerScrappers:
             sp500d[e['ticker']] = e
 
         cedears = set()
+        cedeard = {}
         for e in cedear:
             cedears.add(e['ticker'])
+            cedeard[e['ticker']] = e
 
         intersect = cedears.intersection(sp500s)
 
         list_cedears = []
         for e in intersect:
+            extra_kv = {k:cedeard[e][k] for k in ['div_freq', 'ratio'] }
+            sp500d[e].update(extra_kv)
             list_cedears.append(sp500d[e])
 
         list_cedears.sort(key=lambda tup: tup['weight'], reverse=True)
         return(list_cedears)
-      
+
+     
+    @staticmethod
+    def filter_cedears(dividend_freq: Optional[str]=None):
+
+        all_freq_div = ['Annual', 'Quarterly', 'Semi-annual', 'None', 'Irreg', '-']
+
+        if dividend_freq not in all_freq_div:
+            return []
+
+        l = TickerScrappers.cedear_in_sp500()
+        dividendQ = []
+        for c in l:
+            if c['div_freq'] == dividend_freq:
+                dividendQ.append(c)
+
+        return dividendQ
